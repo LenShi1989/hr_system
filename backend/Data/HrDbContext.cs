@@ -18,6 +18,7 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
     public DbSet<EmployeeSalary> EmployeeSalaries => Set<EmployeeSalary>();
     public DbSet<Payroll> Payrolls => Set<Payroll>();
     public DbSet<PayrollSetting> PayrollSettings => Set<PayrollSetting>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -42,6 +43,10 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
             e.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
+            e.HasOne(u => u.Employee)
+                .WithMany()
+                .HasForeignKey(u => u.EmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<RolePermission>(e =>
@@ -218,5 +223,19 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
                 new Role { Id = 2, Code = "hr", Name = "人事" },
                 new Role { Id = 3, Code = "manager", Name = "部門主管" },
                 new Role { Id = 4, Code = "employee", Name = "一般員工" });
+
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.ToTable("audit_logs");
+            e.Property(a => a.UserEmail).HasMaxLength(320);
+            e.Property(a => a.Role).HasMaxLength(50);
+            e.Property(a => a.Action).HasMaxLength(50);
+            e.Property(a => a.Category).HasMaxLength(50);
+            e.Property(a => a.Entity).HasMaxLength(100);
+            e.Property(a => a.Detail).HasMaxLength(2000);
+            e.Property(a => a.IpAddress).HasMaxLength(64);
+            e.HasIndex(a => a.UserId);
+            e.HasIndex(a => a.CreatedAt);
+        });
     }
 }

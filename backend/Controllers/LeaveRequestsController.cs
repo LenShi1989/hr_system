@@ -1,6 +1,7 @@
 using HrSystem.Api.Data;
 using HrSystem.Api.Dtos;
 using HrSystem.Api.Models;
+using HrSystem.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/leave-requests")]
 [Authorize]
-public class LeaveRequestsController(HrDbContext db) : ApiControllerBase(db)
+public class LeaveRequestsController(HrDbContext db, AuditLogService audit) : ApiControllerBase(db)
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -142,6 +143,8 @@ public class LeaveRequestsController(HrDbContext db) : ApiControllerBase(db)
         };
         db.LeaveRequests.Add(leave);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("create", "leave", "leave_request", leave.Id,
+            new { employeeId, leave.LeaveTypeId, leave.Days }, ct);
 
         var saved = await LoadAsync(leave.Id, ct);
         return Ok(ApiResponse.Ok(ToDto(saved)));
@@ -177,6 +180,8 @@ public class LeaveRequestsController(HrDbContext db) : ApiControllerBase(db)
         leave.ApproverId = approverEmployeeId;
         leave.ApprovedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync(request.Action == "approve" ? "approve" : "reject", "leave", "leave_request", id,
+            new { employeeId = leave.EmployeeId }, ct);
 
         return Ok(ApiResponse.Ok(true));
     }
@@ -203,6 +208,8 @@ public class LeaveRequestsController(HrDbContext db) : ApiControllerBase(db)
 
         leave.Status = "cancelled";
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("cancel", "leave", "leave_request", id,
+            new { employeeId = leave.EmployeeId }, ct);
         return Ok(ApiResponse.Ok(true));
     }
 

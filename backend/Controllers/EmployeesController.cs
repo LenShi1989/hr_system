@@ -1,6 +1,7 @@
 using HrSystem.Api.Data;
 using HrSystem.Api.Dtos;
 using HrSystem.Api.Models;
+using HrSystem.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/employees")]
 [Authorize]
-public class EmployeesController(HrDbContext db) : ControllerBase
+public class EmployeesController(HrDbContext db, AuditLogService audit) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = PermissionCatalog.EmployeeRead)]
@@ -106,6 +107,8 @@ public class EmployeesController(HrDbContext db) : ControllerBase
         };
         db.Employees.Add(employee);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("create", "employee", "employee", employee.Id,
+            new { employee.EmployeeNo, employee.Name }, ct);
 
         return Ok(ApiResponse.Ok(ToDto(employee)));
     }
@@ -141,6 +144,8 @@ public class EmployeesController(HrDbContext db) : ControllerBase
         employee.ManagerId = request.ManagerId;
         employee.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("update", "employee", "employee", id,
+            new { employee.EmployeeNo, employee.Name }, ct);
 
         return Ok(ApiResponse.Ok(ToDto(employee)));
     }
@@ -164,6 +169,8 @@ public class EmployeesController(HrDbContext db) : ControllerBase
         employee.IsActive = false;
         employee.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("delete", "employee", "employee", id,
+            new { employee.EmployeeNo, employee.Name }, ct);
 
         return Ok(ApiResponse.Ok(true));
     }

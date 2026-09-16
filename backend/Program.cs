@@ -18,6 +18,8 @@ builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<WorkSchedule>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<PayrollCalculator>();
+builder.Services.AddScoped<AuditLogService>();
+builder.Services.AddHttpContextAccessor();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");

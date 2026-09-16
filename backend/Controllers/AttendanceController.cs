@@ -11,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/attendance")]
 [Authorize]
-public class AttendanceController(HrDbContext db, WorkSchedule schedule) : ApiControllerBase(db)
+public class AttendanceController(HrDbContext db, WorkSchedule schedule, AuditLogService audit) : ApiControllerBase(db)
 {
     [HttpPost("me/clock-in")]
     [Authorize(Policy = PermissionCatalog.AttendanceSelf)]
@@ -48,6 +48,7 @@ public class AttendanceController(HrDbContext db, WorkSchedule schedule) : ApiCo
         }
 
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("clock_in", "attendance", "attendance_record", record.Id, ct: ct);
         return Ok(ApiResponse.Ok(ToDto(record, null)));
     }
 
@@ -91,6 +92,7 @@ public class AttendanceController(HrDbContext db, WorkSchedule schedule) : ApiCo
         record.Status = record.LateMinutes > 0 ? "late" : record.EarlyLeaveMinutes > 0 ? "early_leave" : "normal";
 
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("clock_out", "attendance", "attendance_record", record.Id, ct: ct);
         return Ok(ApiResponse.Ok(ToDto(record, "下班打卡成功")));
     }
 

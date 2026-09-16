@@ -92,6 +92,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/payroll/EmployeeSalaries.vue'),
         meta: { title: '薪資結構', permission: 'payroll.manage' },
       },
+      {
+        path: 'system/users',
+        name: 'users',
+        component: () => import('@/views/system/Users.vue'),
+        meta: { title: '使用者管理', permission: 'user.manage' },
+      },
+      {
+        path: 'system/roles',
+        name: 'roles',
+        component: () => import('@/views/system/Roles.vue'),
+        meta: { title: '角色權限', permission: 'user.manage' },
+      },
+      {
+        path: 'system/audit-logs',
+        name: 'audit-logs',
+        component: () => import('@/views/system/AuditLogs.vue'),
+        meta: { title: '操作紀錄', permission: 'audit.read' },
+      },
     ],
   },
   {

@@ -62,6 +62,18 @@ const menuGroups = computed(() => {
     groups.push({ title: '薪資', items: payrollItems })
   }
 
+  const systemItems: Array<{ label: string; to: string; icon: string }> = []
+  if (auth.hasPermission('user.manage')) {
+    systemItems.push({ label: '使用者', to: '/system/users', icon: '👤' })
+    systemItems.push({ label: '角色權限', to: '/system/roles', icon: '🎫' })
+  }
+  if (auth.hasPermission('audit.read')) {
+    systemItems.push({ label: '操作紀錄', to: '/system/audit-logs', icon: '📜' })
+  }
+  if (systemItems.length > 0) {
+    groups.push({ title: '系統', items: systemItems })
+  }
+
   return groups
 })
 

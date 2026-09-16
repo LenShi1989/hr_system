@@ -20,6 +20,8 @@ public static class PermissionCatalog
 
     public const string UserManage = "user.manage";
 
+    public const string AuditRead = "audit.read";
+
     public static readonly IReadOnlyDictionary<string, string[]> RoleDefaults =
         new Dictionary<string, string[]>
         {
@@ -29,7 +31,7 @@ public static class PermissionCatalog
                 AttendanceRead, AttendanceSelf,
                 LeaveApprove, LeaveRequest, OvertimeApprove, OvertimeRequest,
                 PayrollRead, PayrollManage,
-                UserManage
+                UserManage, AuditRead
             ],
             ["hr"] =
             [

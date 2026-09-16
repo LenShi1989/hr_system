@@ -1,6 +1,7 @@
 using HrSystem.Api.Data;
 using HrSystem.Api.Dtos;
 using HrSystem.Api.Models;
+using HrSystem.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/overtime-requests")]
 [Authorize]
-public class OvertimeRequestsController(HrDbContext db) : ApiControllerBase(db)
+public class OvertimeRequestsController(HrDbContext db, AuditLogService audit) : ApiControllerBase(db)
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -132,6 +133,8 @@ public class OvertimeRequestsController(HrDbContext db) : ApiControllerBase(db)
         };
         db.OvertimeRequests.Add(overtime);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("create", "overtime", "overtime_request", overtime.Id,
+            new { employeeId, overtime.WorkDate, overtime.Hours }, ct);
 
         var saved = await LoadAsync(overtime.Id, ct);
         return Ok(ApiResponse.Ok(ToDto(saved)));
@@ -167,6 +170,8 @@ public class OvertimeRequestsController(HrDbContext db) : ApiControllerBase(db)
         overtime.ApproverId = approverEmployeeId;
         overtime.ApprovedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync(request.Action == "approve" ? "approve" : "reject", "overtime", "overtime_request", id,
+            new { employeeId = overtime.EmployeeId }, ct);
 
         return Ok(ApiResponse.Ok(true));
     }
@@ -193,6 +198,8 @@ public class OvertimeRequestsController(HrDbContext db) : ApiControllerBase(db)
 
         overtime.Status = "cancelled";
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("cancel", "overtime", "overtime_request", id,
+            new { employeeId = overtime.EmployeeId }, ct);
         return Ok(ApiResponse.Ok(true));
     }
 

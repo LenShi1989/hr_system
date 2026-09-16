@@ -11,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/payrolls")]
 [Authorize]
-public class PayrollsController(HrDbContext db, PayrollCalculator calculator) : ApiControllerBase(db)
+public class PayrollsController(HrDbContext db, PayrollCalculator calculator, AuditLogService audit) : ApiControllerBase(db)
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -107,6 +107,7 @@ public class PayrollsController(HrDbContext db, PayrollCalculator calculator) : 
         }
 
         var result = await calculator.GenerateAsync(request.Period, CurrentUserId, ct);
+        await audit.LogAsync("generate", "payroll", "payroll", null, result, ct);
         return Ok(ApiResponse.Ok(result));
     }
 
@@ -128,6 +129,7 @@ public class PayrollsController(HrDbContext db, PayrollCalculator calculator) : 
         payroll.Status = "confirmed";
         payroll.ConfirmedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("confirm", "payroll", "payroll", id, new { period = payroll.Period, employeeId = payroll.EmployeeId }, ct);
         return Ok(ApiResponse.Ok(true));
     }
 
@@ -149,6 +151,7 @@ public class PayrollsController(HrDbContext db, PayrollCalculator calculator) : 
         payroll.Status = "paid";
         payroll.PaidAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("pay", "payroll", "payroll", id, new { period = payroll.Period, employeeId = payroll.EmployeeId }, ct);
         return Ok(ApiResponse.Ok(true));
     }
 
@@ -172,6 +175,8 @@ public class PayrollsController(HrDbContext db, PayrollCalculator calculator) : 
         payroll.GrossPay = payroll.GrossPay - oldBonus + request.Amount;
         payroll.NetPay = payroll.GrossPay - payroll.InsuranceDeduction - payroll.TaxWithheld - payroll.LeaveDeduction;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("set_bonus", "payroll", "payroll", id,
+            new { period = payroll.Period, employeeId = payroll.EmployeeId, oldBonus, newAmount = payroll.Bonus }, ct);
         return Ok(ApiResponse.Ok(true));
     }
 

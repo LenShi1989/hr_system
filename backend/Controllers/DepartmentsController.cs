@@ -1,6 +1,7 @@
 using HrSystem.Api.Data;
 using HrSystem.Api.Dtos;
 using HrSystem.Api.Models;
+using HrSystem.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/departments")]
 [Authorize]
-public class DepartmentsController(HrDbContext db) : ControllerBase
+public class DepartmentsController(HrDbContext db, AuditLogService audit) : ControllerBase
 {
     [HttpGet("tree")]
     [Authorize(Policy = PermissionCatalog.EmployeeRead)]
@@ -53,6 +54,8 @@ public class DepartmentsController(HrDbContext db) : ControllerBase
         };
         db.Departments.Add(department);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("create", "organization", "department", department.Id,
+            new { department.Code, department.Name }, ct);
 
         return Ok(ApiResponse.Ok(ToDto(department)));
     }
@@ -84,6 +87,8 @@ public class DepartmentsController(HrDbContext db) : ControllerBase
         department.ManagerId = request.ManagerId;
         department.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("update", "organization", "department", id,
+            new { department.Code, department.Name }, ct);
 
         return Ok(ApiResponse.Ok(ToDto(department)));
     }
@@ -113,6 +118,8 @@ public class DepartmentsController(HrDbContext db) : ControllerBase
         department.IsActive = false;
         department.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("delete", "organization", "department", id,
+            new { department.Code, department.Name }, ct);
 
         return Ok(ApiResponse.Ok(true));
     }

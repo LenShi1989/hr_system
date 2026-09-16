@@ -1,6 +1,7 @@
 using HrSystem.Api.Data;
 using HrSystem.Api.Dtos;
 using HrSystem.Api.Models;
+using HrSystem.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace HrSystem.Api.Controllers;
 [ApiController]
 [Route("api/v1/employee-salaries")]
 [Authorize(Policy = PermissionCatalog.PayrollManage)]
-public class EmployeeSalariesController(HrDbContext db) : ApiControllerBase(db)
+public class EmployeeSalariesController(HrDbContext db, AuditLogService audit) : ApiControllerBase(db)
 {
     [HttpGet]
     public async Task<IActionResult> List(
@@ -75,6 +76,8 @@ public class EmployeeSalariesController(HrDbContext db) : ApiControllerBase(db)
         var salary = await db.EmployeeSalaries
             .SingleOrDefaultAsync(s => s.EmployeeId == employeeId, ct);
 
+        var isNew = salary is null;
+
         if (salary is null)
         {
             salary = new EmployeeSalary { EmployeeId = employeeId };
@@ -87,6 +90,8 @@ public class EmployeeSalariesController(HrDbContext db) : ApiControllerBase(db)
         salary.EffectiveDate = request.EffectiveDate;
         salary.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync(isNew ? "create" : "update", "salary", "employee_salary", employeeId,
+            new { salary.BaseSalary, salary.PositionAllowance, salary.MealAllowance, salary.EffectiveDate }, ct);
 
         var saved = await db.EmployeeSalaries
             .AsNoTracking()

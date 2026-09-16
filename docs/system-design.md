@@ -231,10 +231,18 @@ List 皆支援分頁 `page` / `pageSize` 與查詢參數。
 | 薪資 | PUT | `/payrolls/{id}/confirm` | 確認/發放 |
 | 薪資 | GET/PUT | `/employee-salaries/{employeeId}` | 薪資結構檢視/調整（HR） |
 | 帳號 | GET/POST/PUT | `/users` | 使用者管理（admin） |
-| 帳號 | GET | `/roles` | 角色列表（admin） |
+| 帳號 | GET | `/roles` | 角色列表（admin，含權限與使用者數） |
+| 稽核 | GET | `/audit-logs` | 操作紀錄（admin） |
 | 儀表板 | GET | `/dashboard/summary` | 聚合統計（依權限回傳員工/薪資/出勤/待審/個人各 section） |
 
 審核類 (approve) 一律做「本人不可審自己」與「僅直屬主管/HR 可審」檢查。
+
+## 4.1 操作紀錄 (audit log)
+
+- **表**：`audit_logs`（Id, UserId, UserEmail, Role, Action, Category, Entity, EntityId, Detail, IpAddress, CreatedAt）。
+- **寫入**：`AuditLogService.LogAsync(action, category, entity, entityId, detail)` 由各 controller 明確呼叫；登入成功/失敗由 `AuthController` 以 `LogLoginAsync` 記錄（失敗登入 `UserId=0`）。
+- **記錄點**：登入/登入失敗、員工/部門/職位 CRUD、請假/加班 申請與審核與取消、上下班打卡、薪資結構儲存、薪資 generate/confirm/pay/bonus、帳號 create/update。
+- **權限**：`audit.read`（僅 admin）。前端 `system/AuditLogs.vue`。
 
 ## 5. 前端結構
 
@@ -257,6 +265,7 @@ src/
     payroll/Payrolls.vue
     system/Users.vue
     system/Roles.vue
+    system/AuditLogs.vue
   components/                   # 共用表格、表單、Tree、時間選擇、審核按鈕等
 ```
 
@@ -273,7 +282,7 @@ src/
 | M1 | 組織與員工 CRUD（部門樹、職位、員工、軟刪除） | HR 可完整維護人員 | ✅ 已實作 |
 | M2 | 出勤與請假（打卡、請假/加班申請與審核、出勤記錄） | 員工可打卡請假，主管可審 | ✅ 已實作 |
 | M3 | 薪資（薪資結構、月結生成、薪資單、發放狀態） | 可產出並鎖定月薪資 | ✅ 已實作 |
-| M4 | 權限細節 + 操作紀錄 (audit log) + 收尾 | 後端權限皆驗證、操作可追蹤 | ⬜ 待實作 |
+| M4 | 權限細節 + 操作紀錄 (audit log) + 收尾 | 後端權限皆驗證、操作可追蹤 | ✅ 已實作 |
 
 ## 7. 非功能性規則
 

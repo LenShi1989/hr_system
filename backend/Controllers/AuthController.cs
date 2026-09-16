@@ -16,12 +16,14 @@ public class AuthController : ControllerBase
     private readonly HrDbContext _db;
     private readonly PasswordHasher _hasher;
     private readonly TokenService _tokenService;
+    private readonly AuditLogService _audit;
 
-    public AuthController(HrDbContext db, PasswordHasher hasher, TokenService tokenService)
+    public AuthController(HrDbContext db, PasswordHasher hasher, TokenService tokenService, AuditLogService audit)
     {
         _db = db;
         _hasher = hasher;
         _tokenService = tokenService;
+        _audit = audit;
     }
 
     [HttpPost("login")]
@@ -36,10 +38,12 @@ public class AuthController : ControllerBase
 
         if (user is null || !user.IsActive || !_hasher.Verify(request.Password, user.PasswordHash))
         {
+            await _audit.LogLoginAsync(0, request.Email ?? string.Empty, string.Empty, false, "帳號或密碼錯誤", ct);
             return Unauthorized(ApiResponse.Fail("invalid_credentials", "信箱或密碼錯誤"));
         }
 
         var token = _tokenService.CreateToken(user);
+        await _audit.LogLoginAsync(user.Id, user.Email, user.Role?.Code ?? string.Empty, true, ct: ct);
 
         return Ok(ApiResponse.Ok(new LoginResponse
         {
