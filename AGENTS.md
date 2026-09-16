@@ -29,3 +29,7 @@
 - 以後端權限為準：前端路由 `meta.permission` + 守衛只是 UI 層，API 端也要加 `[Authorize]` / permission 檢查。
 - 時間欄位用 `DateTimeOffset`（Postgres `timestamptz`），金額用 `numeric(18,2)`（decimal）。
 - 登入/認證邏輯在 `TokenService`（JWT）與 `PasswordHasher`（PBKDF2）——新帳號流程沿用這兩個 service。
+
+## git commit
+
+- 使用繁體中文
