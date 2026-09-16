@@ -58,6 +58,13 @@ button {
   text-decoration: none;
 }
 
+.nav-item .nav-icon {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 .nav-item:hover {
   background: #1f2937;
 }

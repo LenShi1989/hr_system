@@ -22,7 +22,7 @@ const menuGroups = computed(() => {
       title: '組織員工',
       items: [
         { label: '部門', to: '/organization/departments', icon: '🏢' },
-        { label: '職位', to: '/organization/positions', icon: '🪪' },
+        { label: '職位', to: '/organization/positions', icon: '🛠️' },
         { label: '員工', to: '/organization/employees', icon: '👥' },
       ],
     })
@@ -95,7 +95,7 @@ function onLogout() {
             :to="item.to"
             class="nav-item"
           >
-            <span>{{ item.icon }}</span>
+            <span class="nav-icon">{{ item.icon }}</span>
             <span>{{ item.label }}</span>
           </router-link>
         </div>
