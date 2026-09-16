@@ -1,9 +1,0 @@
-# ASP.NET Core Web API (.NET 10)
-
-bin/
-obj/
-*.user
-.vs/
-
-# 含本機密碼 / JWT secret / 種子密碼，嚴禁 commit
-appsettings.Development.json
