@@ -1,6 +1,6 @@
 # 人事管理系統設計文件 (system-design)
 
-> 狀態: 設計階段（尚未有程式碼）。本文件是後續 scaffolding 的唯一依據，實作前請先與本文件對齊。
+> 狀態: M0–M4 已實作（見 §6）。本文件為系統設計的唯一依據，後續變更請先與本文件對齊。
 
 ## 1. 系統概觀
 
@@ -19,11 +19,11 @@ PostgreSQL (localhost:5432)
 - 前端：Vue 3 admin SPA，`Sidebar + Header + Content` 佈局，滾動路由守衛控權。
 - 後端：REST API，統一前綴 `/api/v1`，JWT 認證 + 角色授權。
 - 資料庫：PostgreSQL，EF Core 作 ORM，Migration 放後端專案。
-- 不 commit 任何密碼/金鑰（見 AGENTS.md）。
+- 機密：開發用 `appsettings.Development.json`（DB 連線、JWT secret、種子密碼）目前隨 repo 公開（經確認僅為開發參數）；**正式部署一律改由環境變數 / Secret Manager 注入，且不得沿用開發值**。前端機密放 `.env.local`（gitignored）。
 
 ## 2. 角色與權限 (RBAC)
 
-四種角色，權限以**後端為準**，前端僅做 UI 隱藏。
+內建四種角色（下表），admin 另可於 UI 自訂角色；權限以**後端為準**，前端僅做 UI 隱藏。
 
 | 角色 | 說明 | 可存取 |
 |------|------|--------|
@@ -32,7 +32,7 @@ PostgreSQL (localhost:5432)
 | `manager`  | 部門主管 | 審核部屬的請假/加班、檢視部屬出勤與薪資 |
 | `employee` | 一般員工 | 個人上下班打卡、申請請假/加班、查看自己的薪資單 |
 
-權限以 `permission code` 字串控管 (如 `employee.create`、`leave.approve`)，
+權限以 `permission code` 字串控管 (如 `employee.manage`、`leave.approve`)，
 `Role` 對映多個 code；前端依 code 過濾 Sidebar 與按鈕。
 
 `admin` 可於「系統 > 角色權限」新增/編輯/刪除角色並勾選其權限（`GET /roles/permissions` 提供
@@ -48,6 +48,7 @@ erDiagram
     POSITIONS ||--o{ EMPLOYEES : "assigned"
     EMPLOYEES ||--o| USERS : "login"
     ROLES ||--o{ USERS : "granted"
+    ROLES ||--o{ ROLE_PERMISSIONS : "has"
     EMPLOYEES ||--o{ LEAVE_REQUESTS : "submits"
     LEAVE_TYPES ||--o{ LEAVE_REQUESTS : "of type"
     EMPLOYEES ||--o{ OVERTIME_REQUESTS : "submits"
@@ -197,19 +198,22 @@ erDiagram
 | 欄位 | 型別 | 說明 |
 |------|------|------|
 | id | bigint | PK |
-| code | text | `admin`/`hr`/`manager`/`employee` |
+| code | text | `admin`/`hr`/`manager`/`employee`（可另建自訂角色） |
 | name | text | |
+| is_active | boolean | |
 
 **role_permissions**
 | 欄位 | 型別 | 說明 |
 |------|------|------|
-| role_id | bigint | PK(複合) |
-| permission_code | text | PK(複合)，e.g. `employee.create` |
+| role_id | bigint | PK(複合)，FK→roles |
+| permission_code | text | PK(複合)，e.g. `employee.read` |
+
+> 權限代碼由 `PermissionCatalog`（`backend/Models/PermissionCatalog.cs`）集中定義（code + 中文 label + 分組），並以 `RoleDefaults` 提供各內建角色的預設權限。
 
 ## 4. API 設計
 
 統一 `/api/v1` 前綴，回應格式：`{ "data": ..., "error": { "code": "...", "message": "..." } }`。
-List 皆支援分頁 `page` / `pageSize` 與查詢參數。
+List 皆支援分頁 `page` / `pageSize` 與查詢參數（`/roles`、`/roles/permissions` 等主資料清單為例外）。
 
 | 模組 | Method | Path | 說明 |
 |------|--------|------|------|
@@ -258,6 +262,8 @@ src/
   stores/auth.ts                # JWT、user、permissions (Pinia)
   services/http.ts              # Axios instance：自動帶 Authorization、401 時登出
   services/dashboard.ts         # 儀表板聚合統計 API
+  services/system.ts            # 使用者 / 角色 / 權限管理 API
+  services/audit.ts             # 操作紀錄 API（含 category/action 中文標籤）
   layouts/AdminLayout.vue       # Sidebar + Header + router-view
   views/
     auth/Login.vue
@@ -276,7 +282,7 @@ src/
 
 - 路由表含 `meta.permission`，BeforeEach 比對 `auth stores` 的 permissions，不足導向 403。
 - 日期一律顯示臺灣本地時區；API 傳 `ISO 8601`（含時區）。
-- UI 庫未定（AGENTS.md 尚可更動）——選型後統一使用，不做混搭。
+- UI 全自製（共用類定義於 `style.css`），不使用 UI 庫；唯一第三方相依為 chart.js（僅儀表板）。
 - Sidebar 選單依權限動態產出，員工/主管/HR 看到的項目不同。
 
 ## 6. 開發里程碑
@@ -288,6 +294,7 @@ src/
 | M2 | 出勤與請假（打卡、請假/加班申請與審核、出勤記錄） | 員工可打卡請假，主管可審 | ✅ 已實作 |
 | M3 | 薪資（薪資結構、月結生成、薪資單、發放狀態） | 可產出並鎖定月薪資 | ✅ 已實作 |
 | M4 | 權限細節 + 操作紀錄 (audit log) + 收尾 | 後端權限皆驗證、操作可追蹤 | ✅ 已實作 |
+| M5 | 角色權限管理：自訂角色（新增/編輯/刪除）、權限勾選編輯驅動 sidebar、編輯持久化 | admin 可管理角色與權限 | ✅ 已實作 |
 
 ## 7. 非功能性規則
 
@@ -295,4 +302,4 @@ src/
 - 所有對外 API DTO 與資料庫 Entity 分離，不直接暴露 Entity。
 - 列表一律分頁；無分頁的 `tree` 類標記為例外。
 - Migration 由 EF Core tools 產生並隨程式碼 commit（不含連線字串與密碼）。
-- 敏感設定只放 `appsettings.Development.json`（gitignored）/ `dotnet user-secrets` / 前端 `.env.local`。
+- 敏感設定：開發用 `appsettings.Development.json`（目前隨 repo 公開）、正式用環境變數或 `dotnet user-secrets`；前端 `.env.local`（gitignored）。

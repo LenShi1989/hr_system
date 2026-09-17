@@ -18,9 +18,9 @@
 ## 資料庫
 
 - Host: `localhost:5432`，user: `postgres`，database: `hr_system`（已建立）。
-- 密碼、JWT secret、種子帳號密碼全部只在 `backend/appsettings.Development.json`，該檔已被 `backend/.gitignore` 排除，**嚴禁** commit 或貼到前端/文件。
-- 種子帳號：`admin` / `hr` / `manager` / `employee` 加上 `@hr.local`，密碼見 gitignored 檔案。
-- JWT/RBAC：`PermissionCatalog.RoleDefaults`（`backend/Models/PermissionCatalog.cs`）是角色→權限的唯一來源；改權限要在 `DbSeeder` 增刪角色時同步。
+- 密碼、JWT secret、種子帳號密碼全部只在 `backend/appsettings.Development.json`。經 2026-09-17 確認這些僅為**開發參數、允許隨公開 repo 追蹤**（該檔已被 commit）；但**禁止貼到前端**，正式部署須改用環境變數 / Secret Manager，且不得沿用開發值。
+- 種子帳號：`admin` / `hr` / `manager` / `employee` 加上 `@hr.local`，密碼見 `backend/appsettings.Development.json`。
+- JWT/RBAC：`PermissionCatalog`（`backend/Models/PermissionCatalog.cs`）是權限定義（`Definitions`：code/label/group）與角色預設權限（`RoleDefaults`）的唯一來源。`DbSeeder` 只在新角色首次建立時套 `RoleDefaults`，之後 admin 於 UI 的角色權限編輯永久保留、不再被覆寫。
 
 ## 慣例
 
