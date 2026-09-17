@@ -35,6 +35,10 @@ PostgreSQL (localhost:5432)
 權限以 `permission code` 字串控管 (如 `employee.create`、`leave.approve`)，
 `Role` 對映多個 code；前端依 code 過濾 Sidebar 與按鈕。
 
+`admin` 可於「系統 > 角色權限」新增/編輯/刪除角色並勾選其權限（`GET /roles/permissions` 提供
+code/label/group 清單）。權限變更後，該角色使用者需**重新登入**才會取得新 JWT（權限內嵌於 token）。
+`DbSeeder` 僅在角色**首次建立**時套用 `PermissionCatalog.RoleDefaults`，之後對角色權限的編輯不會被啟動流程覆寫。
+
 ## 3. 資料模型 (ER)
 
 ```mermaid
@@ -231,7 +235,8 @@ List 皆支援分頁 `page` / `pageSize` 與查詢參數。
 | 薪資 | PUT | `/payrolls/{id}/confirm` | 確認/發放 |
 | 薪資 | GET/PUT | `/employee-salaries/{employeeId}` | 薪資結構檢視/調整（HR） |
 | 帳號 | GET/POST/PUT | `/users` | 使用者管理（admin） |
-| 帳號 | GET | `/roles` | 角色列表（admin，含權限與使用者數） |
+| 角色 | GET/POST/PUT/DELETE | `/roles` | 角色管理（admin，含權限、使用者數；使用者綁定中不可刪） |
+| 角色 | GET | `/roles/permissions` | 可用權限清單（code/label/group，供角色編輯勾選） |
 | 稽核 | GET | `/audit-logs` | 操作紀錄（admin） |
 | 儀表板 | GET | `/dashboard/summary` | 聚合統計（依權限回傳員工/薪資/出勤/待審/個人各 section） |
 
@@ -241,7 +246,7 @@ List 皆支援分頁 `page` / `pageSize` 與查詢參數。
 
 - **表**：`audit_logs`（Id, UserId, UserEmail, Role, Action, Category, Entity, EntityId, Detail, IpAddress, CreatedAt）。
 - **寫入**：`AuditLogService.LogAsync(action, category, entity, entityId, detail)` 由各 controller 明確呼叫；登入成功/失敗由 `AuthController` 以 `LogLoginAsync` 記錄（失敗登入 `UserId=0`）。
-- **記錄點**：登入/登入失敗、員工/部門/職位 CRUD、請假/加班 申請與審核與取消、上下班打卡、薪資結構儲存、薪資 generate/confirm/pay/bonus、帳號 create/update。
+- **記錄點**：登入/登入失敗、員工/部門/職位 CRUD、請假/加班 申請與審核與取消、上下班打卡、薪資結構儲存、薪資 generate/confirm/pay/bonus、帳號 create/update、角色 create/update/delete。
 - **權限**：`audit.read`（僅 admin）。前端 `system/AuditLogs.vue`。
 
 ## 5. 前端結構

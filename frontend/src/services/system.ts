@@ -31,6 +31,23 @@ export interface Role {
   permissionCodes: string[]
 }
 
+export interface Permission {
+  code: string
+  label: string
+  group: string
+}
+
+export interface CreateRole {
+  code: string
+  name: string
+  permissionCodes: string[]
+}
+
+export interface UpdateRole {
+  name: string
+  permissionCodes: string[]
+}
+
 export interface UserQuery {
   page?: number
   pageSize?: number
@@ -55,5 +72,25 @@ export async function updateUser(id: number, body: UserUpsert): Promise<boolean>
 
 export async function getRoles(): Promise<Role[]> {
   const { data } = await http.get<Role[]>('/roles')
+  return data
+}
+
+export async function getPermissions(): Promise<Permission[]> {
+  const { data } = await http.get<Permission[]>('/roles/permissions')
+  return data
+}
+
+export async function createRole(body: CreateRole): Promise<boolean> {
+  const { data } = await http.post<boolean>('/roles', body)
+  return data
+}
+
+export async function updateRole(id: number, body: UpdateRole): Promise<boolean> {
+  const { data } = await http.put<boolean>(`/roles/${id}`, body)
+  return data
+}
+
+export async function deleteRole(id: number): Promise<boolean> {
+  const { data } = await http.delete<boolean>(`/roles/${id}`)
   return data
 }

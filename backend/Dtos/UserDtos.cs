@@ -24,4 +24,8 @@ public record RoleDto(
     int UserCount,
     string[] PermissionCodes);
 
-public record RoleUserCountDto(long Id, int Count);
+public record PermissionDto(string Code, string Label, string Group);
+
+public record CreateRoleRequest(string Code, string Name, string[] PermissionCodes);
+
+public record UpdateRoleRequest(string Name, string[] PermissionCodes);

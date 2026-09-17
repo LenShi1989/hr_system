@@ -20,22 +20,17 @@ public class DbSeeder(HrDbContext db, PasswordHasher hasher, IReadOnlyDictionary
                 role = new Role { Code = code, Name = RoleNames[code] };
                 db.Roles.Add(role);
                 await db.SaveChangesAsync();
-            }
 
-            foreach (var pc in role.Permissions.Select(p => p.PermissionCode).Except(PermissionCatalog.RoleDefaults[code]))
-            {
-                db.RolePermissions.Remove(new RolePermission { RoleId = role.Id, PermissionCode = pc });
-            }
+                foreach (var pc in PermissionCatalog.RoleDefaults[code])
+                {
+                    db.RolePermissions.Add(new RolePermission { RoleId = role.Id, PermissionCode = pc });
+                }
 
-            foreach (var pc in PermissionCatalog.RoleDefaults[code].Except(role.Permissions.Select(p => p.PermissionCode)))
-            {
-                db.RolePermissions.Add(new RolePermission { RoleId = role.Id, PermissionCode = pc });
+                await db.SaveChangesAsync();
             }
 
             roles[code] = role;
         }
-
-        await db.SaveChangesAsync();
 
         foreach (var (code, password) in seedPasswords)
         {
