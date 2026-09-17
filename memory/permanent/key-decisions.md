@@ -8,6 +8,8 @@
 - **時間寫入坑**：Npgsql 10 寫 `timestamptz` 只接受 offset=0；做法是在 `HrDbContext.ConfigureConventions` 用 `DateTimeOffsetUtcConverter` 全欄位轉 UTC（M2 踩到，已在 M2 修復）。
 - **前端頁面模式**：`services/<module>.ts`（interface + axios funcs）→ router（permission）→ AdminLayout 依權限動態產選單群 → `views/<module>/` 頁面用 `.card/.toolbar/.table/.tag/.toast` CSS 類（`style.css` 全站共用）；`errorMessage()` 統一做錯誤 toast。
 - **回應結構**：`{ data, error:{code,message} }`；前端 `http.ts` 拆出 data、401 跳登入（登入除外）。
+- **開發機密可公開（2026-09-17 決定）**：`backend/appsettings.Development.json`（DB 連線、JWT secret、種子密碼）為**開發參數，允許進公開 repo**（該檔已 tracked、`backend/.gitignore` 已移除）；**正式部署務必改用環境變數/Secret Manager 且不得沿用這些值**。若日後要恢復隱藏，需 `git rm --cached` + 加回忽略規則。
+- **角色權限編輯持久化（2026-09-17）**：`DbSeeder` 僅在角色「首次建立」時套 `RoleDefaults`，之後 admin 於 UI 的編輯永久保留、不再被啟動流程覆寫；刪除角色採硬刪，但仍綁使用者時回 400。
 
 ## 教訓
 - backend build 前務必停 HrSystem.Api 進程，否則 exe 被鎖（MSB3027/MSB3021）。
