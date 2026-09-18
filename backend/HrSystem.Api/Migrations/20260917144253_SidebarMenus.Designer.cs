@@ -3,6 +3,7 @@ using System;
 using HrSystem.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HrSystem.Api.Migrations
 {
     [DbContext(typeof(HrDbContext))]
-    partial class HrDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260917144253_SidebarMenus")]
+    partial class SidebarMenus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -656,198 +659,6 @@ namespace HrSystem.Api.Migrations
                     b.HasKey("RoleId", "PermissionCode");
 
                     b.ToTable("role_permissions", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "dashboard.read"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "employee.manage"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "employee.read"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "attendance.read"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "attendance.self"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "leave.approve"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "leave.request"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "overtime.approve"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "overtime.request"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "payroll.read"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "payroll.manage"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "user.manage"
-                        },
-                        new
-                        {
-                            RoleId = 1L,
-                            PermissionCode = "audit.read"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "dashboard.read"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "employee.manage"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "employee.read"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "attendance.read"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "attendance.self"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "leave.approve"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "leave.request"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "overtime.approve"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "overtime.request"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "payroll.read"
-                        },
-                        new
-                        {
-                            RoleId = 2L,
-                            PermissionCode = "payroll.manage"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "dashboard.read"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "employee.read"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "attendance.read"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "attendance.self"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "leave.approve"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "leave.request"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "overtime.approve"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "overtime.request"
-                        },
-                        new
-                        {
-                            RoleId = 3L,
-                            PermissionCode = "payroll.read"
-                        },
-                        new
-                        {
-                            RoleId = 4L,
-                            PermissionCode = "dashboard.read"
-                        },
-                        new
-                        {
-                            RoleId = 4L,
-                            PermissionCode = "attendance.self"
-                        },
-                        new
-                        {
-                            RoleId = 4L,
-                            PermissionCode = "payroll.read"
-                        },
-                        new
-                        {
-                            RoleId = 4L,
-                            PermissionCode = "leave.request"
-                        },
-                        new
-                        {
-                            RoleId = 4L,
-                            PermissionCode = "overtime.request"
-                        });
                 });
 
             modelBuilder.Entity("HrSystem.Api.Models.SidebarMenu", b =>

@@ -55,6 +55,7 @@ public class DbSeeder(HrDbContext db, PasswordHasher hasher, IReadOnlyDictionary
         await SeedLeaveTypesAsync();
         await EnsureSeedEmployeesAsync();
         await SeedPayrollDataAsync();
+        await SeedSidebarMenusAsync();
     }
 
     private async Task SeedLeaveTypesAsync()
@@ -206,6 +207,53 @@ public class DbSeeder(HrDbContext db, PasswordHasher hasher, IReadOnlyDictionary
                 PositionAllowance = positionAllowance,
                 MealAllowance = mealAllowance,
                 EffectiveDate = today
+            });
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private async Task SeedSidebarMenusAsync()
+    {
+        var menus = new (string GroupTitle, int GroupOrder, string Label, string Route, string Icon, string Permission, int SortOrder)[]
+        {
+            ("", 0, "儀表板", "/", "📊", PermissionCatalog.DashboardRead, 0),
+
+            ("組織員工", 1, "部門", "/organization/departments", "🏢", PermissionCatalog.EmployeeRead, 0),
+            ("組織員工", 1, "職位", "/organization/positions", "🛠️", PermissionCatalog.EmployeeRead, 1),
+            ("組織員工", 1, "員工", "/organization/employees", "👥", PermissionCatalog.EmployeeRead, 2),
+
+            ("出勤請假", 2, "我的出勤", "/attendance/my", "🕘", PermissionCatalog.AttendanceSelf, 0),
+            ("出勤請假", 2, "出勤記錄", "/attendance/records", "📅", PermissionCatalog.AttendanceRead, 1),
+            ("出勤請假", 2, "我的請假", "/leave/my", "🏖️", PermissionCatalog.LeaveRequest, 2),
+            ("出勤請假", 2, "請假審核", "/leave/review", "✅", PermissionCatalog.LeaveApprove, 3),
+            ("出勤請假", 2, "我的加班", "/overtime/my", "🌙", PermissionCatalog.OvertimeRequest, 4),
+            ("出勤請假", 2, "加班審核", "/overtime/review", "🚦", PermissionCatalog.OvertimeApprove, 5),
+
+            ("薪資", 3, "薪資單", "/payroll/payrolls", "💵", PermissionCatalog.PayrollRead, 0),
+            ("薪資", 3, "薪資結構", "/payroll/salaries", "⚙️", PermissionCatalog.PayrollManage, 1),
+
+            ("系統", 4, "使用者", "/system/users", "👤", PermissionCatalog.UserManage, 0),
+            ("系統", 4, "角色權限", "/system/roles", "🎫", PermissionCatalog.UserManage, 1),
+            ("系統", 4, "操作紀錄", "/system/audit-logs", "📜", PermissionCatalog.AuditRead, 2)
+        };
+
+        if (await db.SidebarMenus.AnyAsync())
+        {
+            return;
+        }
+
+        foreach (var (groupTitle, groupOrder, label, route, icon, permission, sortOrder) in menus)
+        {
+            db.SidebarMenus.Add(new SidebarMenu
+            {
+                GroupTitle = groupTitle,
+                GroupOrder = groupOrder,
+                Label = label,
+                Route = route,
+                Icon = icon,
+                PermissionCode = permission,
+                SortOrder = sortOrder
             });
         }
 

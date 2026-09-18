@@ -5,6 +5,14 @@ namespace HrSystem.Api.Data;
 
 public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(options)
 {
+    private static readonly IReadOnlyDictionary<string, long> RoleSeedIds =
+        new Dictionary<string, long>
+        {
+            ["admin"] = 1,
+            ["hr"] = 2,
+            ["manager"] = 3,
+            ["employee"] = 4
+        };
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
@@ -19,6 +27,7 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
     public DbSet<Payroll> Payrolls => Set<Payroll>();
     public DbSet<PayrollSetting> PayrollSettings => Set<PayrollSetting>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<SidebarMenu> SidebarMenus => Set<SidebarMenu>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -224,6 +233,12 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
                 new Role { Id = 3, Code = "manager", Name = "部門主管" },
                 new Role { Id = 4, Code = "employee", Name = "一般員工" });
 
+        modelBuilder.Entity<RolePermission>()
+            .HasData(PermissionCatalog.RoleDefaults
+                .SelectMany(r => r.Value.Select(p =>
+                    new RolePermission { RoleId = RoleSeedIds[r.Key], PermissionCode = p }))
+                .ToArray());
+
         modelBuilder.Entity<AuditLog>(e =>
         {
             e.ToTable("audit_logs");
@@ -236,6 +251,17 @@ public class HrDbContext(DbContextOptions<HrDbContext> options) : DbContext(opti
             e.Property(a => a.IpAddress).HasMaxLength(64);
             e.HasIndex(a => a.UserId);
             e.HasIndex(a => a.CreatedAt);
+        });
+
+        modelBuilder.Entity<SidebarMenu>(e =>
+        {
+            e.ToTable("sidebar_menus");
+            e.Property(m => m.GroupTitle).HasMaxLength(100);
+            e.Property(m => m.Label).HasMaxLength(100);
+            e.Property(m => m.Route).HasMaxLength(200);
+            e.Property(m => m.Icon).HasMaxLength(20);
+            e.Property(m => m.PermissionCode).HasMaxLength(64);
+            e.HasIndex(m => new { m.GroupOrder, m.SortOrder });
         });
     }
 }

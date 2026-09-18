@@ -39,6 +39,12 @@ PostgreSQL (localhost:5432)
 code/label/group 清單）。權限變更後，該角色使用者需**重新登入**才會取得新 JWT（權限內嵌於 token）。
 `DbSeeder` 僅在角色**首次建立**時套用 `PermissionCatalog.RoleDefaults`，之後對角色權限的編輯不會被啟動流程覆寫。
 
+**Sidebar 由資料庫驅動**（`sidebar_menus` 表，v6 起）：選單項目及其權限、分組、排序皆存於
+`sidebar_menus`；前端 `AdminLayout` 改為呼叫 `GET /sidebar/menus`，後端依目前 JWT 的 permission claims
+過濾後回傳（未帶權限的選單不顯示）。`DbSeeder` 只在表空時補 seed 預設選單（與過往硬編碼清單等價）。
+內建角色權限以 `role_permissions` 表的 `HasData` 種子（對應 `RoleDefaults`，v6 新增，解決全新 DB
+無權限資料的問題）。
+
 ## 3. 資料模型 (ER)
 
 ```mermaid
@@ -243,6 +249,7 @@ List 皆支援分頁 `page` / `pageSize` 與查詢參數（`/roles`、`/roles/pe
 | 角色 | GET | `/roles/permissions` | 可用權限清單（code/label/group，供角色編輯勾選） |
 | 稽核 | GET | `/audit-logs` | 操作紀錄（admin） |
 | 儀表板 | GET | `/dashboard/summary` | 聚合統計（依權限回傳員工/薪資/出勤/待審/個人各 section） |
+| Sidebar | GET | `/sidebar/menus` | 側邊選單（依目前 JWT 權限過濾，登入即可） |
 
 審核類 (approve) 一律做「本人不可審自己」與「僅直屬主管/HR 可審」檢查。
 
@@ -262,6 +269,7 @@ src/
   stores/auth.ts                # JWT、user、permissions (Pinia)
   services/http.ts              # Axios instance：自動帶 Authorization、401 時登出
   services/dashboard.ts         # 儀表板聚合統計 API
+  services/sidebar.ts           # 側邊選單 API（由 DB 驅動）
   services/system.ts            # 使用者 / 角色 / 權限管理 API
   services/audit.ts             # 操作紀錄 API（含 category/action 中文標籤）
   layouts/AdminLayout.vue       # Sidebar + Header + router-view
@@ -295,6 +303,7 @@ src/
 | M3 | 薪資（薪資結構、月結生成、薪資單、發放狀態） | 可產出並鎖定月薪資 | ✅ 已實作 |
 | M4 | 權限細節 + 操作紀錄 (audit log) + 收尾 | 後端權限皆驗證、操作可追蹤 | ✅ 已實作 |
 | M5 | 角色權限管理：自訂角色（新增/編輯/刪除）、權限勾選編輯驅動 sidebar、編輯持久化 | admin 可管理角色與權限 | ✅ 已實作 |
+| M6 | Sidebar 資料庫化：`sidebar_menus` 表＋`GET /sidebar/menus` 依權限回傳；補 `role_permissions` 種子 | 前端選單由 DB 驅動、全新 DB 即有權限 | ✅ 已實作 |
 
 ## 7. 非功能性規則
 
